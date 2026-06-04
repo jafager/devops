@@ -244,3 +244,77 @@ resource "aws_ecs_service" "flaskhello" {
     Name = "${var.app_name}-service"
   }
 }
+
+
+### GitHub Actions
+
+# Data source to get current AWS account ID
+data "aws_caller_identity" "current" {}
+
+# IAM role that GitHub Actions assumes via OIDC
+resource "aws_iam_role" "github_actions" {
+    name = "${var.app_name}-github-actions"
+
+    assume_role_policy = jsonencode({
+        Version = "2012-10-17"
+        Statement = [{
+            Effect = "Allow"
+            Principal = {
+                Federated = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/token.actions.githubusercontent.com"
+            }
+            Action = "sts:AssumeRoleWithWebIdentity"
+            Condition = {
+                StringEquals = {
+                    "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
+                }
+                StringLike = {
+                    "token.actions.githubusercontent.com:sub" = "repo:${var.github_org}/${var.github_repo}:*"
+                }
+            }
+        }]
+    })
+}
+
+# Policy allowing ECR push and ECS deployment
+resource "aws_iam_policy" "github_actions" {
+  name = "${var.app_name}-github-actions"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:GetAuthorizationToken"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+          "ecr:InitiateLayerUpload",
+          "ecr:UploadLayerPart",
+          "ecr:CompleteLayerUpload",
+          "ecr:PutImage"
+        ]
+        Resource = "arn:aws:ecr:${var.aws_region}:${data.aws_caller_identity.current.account_id}:repository/${var.app_name}"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ecs:UpdateService",
+          "ecs:DescribeServices"
+        ]
+        Resource = "arn:aws:ecs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:service/${var.app_name}-cluster/${var.app_name}-service"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "github_actions" {
+    role = aws_iam_role.github_actions.name
+    policy_arn = aws_iam_policy.github_actions.arn
+}

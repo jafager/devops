@@ -12,3 +12,8 @@ output "cloudwatch_log_group" {
     description = "CloudWatch log group name"
     value = aws_cloudwatch_log_group.flaskhello.name
 }
+
+output "github_actions_role_arn" {
+    description = "IAM role ARN for GitHub Actions"
+    value = aws_iam_role.github_actions.arn
+}
