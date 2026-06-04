@@ -65,6 +65,13 @@ jobs:
                 docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
                 docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
             
+            - name: Download current task definition
+              run: |
+                aws ecs describe-task-definition \
+                  --task-definition flaskhello \
+                  --query taskDefinition \
+                  > task-definition.json
+          
             - name: Update task definition with new image
               id: update-task-def
               uses: aws-actions/amazon-ecs-render-task-definition@v1
