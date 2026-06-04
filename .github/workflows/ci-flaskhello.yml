@@ -65,9 +65,18 @@ jobs:
                 docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
                 docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
             
-            - name: Deploy to ECS
-              run: |
-                aws ecs update-service \
-                --cluster flaskhello-cluster \
-                --service flaskhello-service \
-                --force-new-deployment
+            - name: Update task definition with new image
+              id: update-task-def
+              uses: aws-actions/amazon-ecs-render-task-definition@v1
+              with:
+                task-definition: task-definition.json
+                container-name: flaskhello
+                image: ${{ steps.login-ecr.outputs.registry }}/flaskhello:${{ github.sha }}
+
+            - name: Deploy updated task definition to ECS
+              uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+              with:
+                task-definition: ${{ steps.update-task-def.outputs.task-definition }}
+                service: flaskhello-service
+                cluster: flaskhello-cluster
+                wait-for-service-stability: true
