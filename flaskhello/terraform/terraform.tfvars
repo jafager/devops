@@ -1,0 +1,4 @@
+aws_region = "us-east-1"
+app_name = "flaskhello"
+ecr_repository_uri = "914834315544.dkr.ecr.us-east-1.amazonaws.com/flaskhello"
+terraform_state_bucket = "jafager-sandbox-flaskhello-terraform-state"
