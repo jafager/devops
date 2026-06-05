@@ -306,7 +306,8 @@ resource "aws_iam_policy" "github_actions" {
         Effect = "Allow"
         Action = [
           "ecs:UpdateService",
-          "ecs:DescribeServices"
+          "ecs:DescribeServices",
+          "ecs:DescribeTaskDefinition"
         ]
         Resource = "arn:aws:ecs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:service/${var.app_name}-cluster/${var.app_name}-service"
       }
