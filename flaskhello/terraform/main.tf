@@ -306,10 +306,24 @@ resource "aws_iam_policy" "github_actions" {
         Effect = "Allow"
         Action = [
           "ecs:UpdateService",
-          "ecs:DescribeServices",
-          "ecs:DescribeTaskDefinition"
+          "ecs:DescribeServices"
         ]
         Resource = "arn:aws:ecs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:service/${var.app_name}-cluster/${var.app_name}-service"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+            "ecs:DescribeTaskDefinition",
+            "ecs:RegisterTaskDefinition"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+            "iam:PassRole"
+        ]
+        Resource = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.app_name}-ecs-task-execution"
       }
     ]
   })
