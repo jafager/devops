@@ -34,7 +34,7 @@ jobs:
     deploy:
         needs: test
         # Only deploy on merge to main, not on PRs or feature branches
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
         runs-on: ubuntu-latest
 
         # Required for OIDC
