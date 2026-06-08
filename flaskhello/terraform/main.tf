@@ -144,7 +144,7 @@ resource "aws_ecs_task_definition" "flaskhello" {
 
     container_definitions = jsonencode([{
         name = var.app_name
-        image = "${var.ecr_repository_uri}:latest"
+        image = "${var.ecr_repository_uri}:${var.image_tag}"
 
         portMappings = [{
             containerPort = 5000
@@ -242,6 +242,7 @@ resource "aws_ecs_service" "flaskhello" {
 
   deployment_minimum_healthy_percent = 0
   deployment_maximum_percent = 100
+  force_new_deployment = true
 
   tags = {
     Name = "${var.app_name}-service"
@@ -327,6 +328,52 @@ resource "aws_iam_policy" "github_actions" {
             "iam:PassRole"
         ]
         Resource = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.app_name}-ecs-task-execution"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+            "iam:GetRole",
+            "iam:PassRole",
+            "iam:ListRolePolicies",
+            "iam:ListAttachedRolePolicies"
+        ]
+        Resource = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.app_name}-*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+            "ec2:DescribeVpcs",
+            "ec2:DescribeSubnets",
+            "ec2:DescribeSecurityGroups",
+            "ec2:DescribeInstances",
+            "ec2:DescribeInternetGateways",
+            "ec2:DescribeRouteTables",
+            "ec2:DescribeNetworkInterfaces"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+            "logs:DescribeLogGroups"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+            "s3:GetObject",
+            "s3:PutObject",
+            "s3:DeleteObject"
+        ]
+        Resource = "arn:aws:s3:::${var.terraform_state_bucket}/flaskhello/*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+            "s3:ListBucket"
+        ]
+        Resource = "arn:aws:s3:::${var.terraform_state_bucket}"
       }
     ]
   })
