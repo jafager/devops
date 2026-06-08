@@ -65,7 +65,23 @@ jobs:
                 docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
                 docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
                 docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-            
+
+            - name: Set up Terraform
+              uses: hashicorp/setup-terraform@v3
+              
+            - name: Terraform Init
+              working-directory: terraform/flaskhello
+              run: terraform init
+
+            - name: Terraform Apply
+              working-directory: terraform/flaskhello
+              run: terraform apply -auto-approve
+              env:
+                TF_VAR_image_tag: ${{ github.sha }}
+                TF_VAR_ecr_repository_uri: ${{ secrets.ECR_REPOSITORY_URI }}
+                TF_VAR_github_org: ${{ github.repository_owner }}
+                TF_VAR_github_repo: ${{ github.event.repository.name }}
+
             - name: Download current task definition
               run: |
                 aws ecs describe-task-definition \
